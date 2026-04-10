@@ -31,6 +31,7 @@ from alice_handlers import (
     cmd_join,
     cmd_name,
     cmd_status,
+    cmd_hosttools,
     cmd_characterlist,
     cmd_showsus,
     cmd_rename,
@@ -129,6 +130,7 @@ def main() -> None:
     app.add_handler(CommandHandler("endgame", cmd_endgame))
     app.add_handler(CommandHandler("forcestop", cmd_forcestop))
     app.add_handler(CommandHandler("status", cmd_status))
+    app.add_handler(CommandHandler("hosttools", cmd_hosttools))
     app.add_handler(CommandHandler("characterlist", cmd_characterlist))
     app.add_handler(CommandHandler("showsus", cmd_showsus))
 

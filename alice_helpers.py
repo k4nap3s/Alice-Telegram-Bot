@@ -636,6 +636,7 @@ def sus_table_text(s: GameSession) -> str:
     for rank, (name, total, ig, it, tag) in enumerate(rows, 1):
         safe_name = html.escape(name[:32])
         lines.append(f"{rank}. {tag} <b>{safe_name}</b>")
+        lines.append(f"   ├ Total: {total}")
         lines.append(f"   ├ In-Game: {ig}  │  In-Text: {it}")
         lines.append("")
     return "\n".join(lines).rstrip()

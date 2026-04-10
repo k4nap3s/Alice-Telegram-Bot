@@ -5,7 +5,6 @@ from telegram import ReplyKeyboardMarkup, InlineKeyboardMarkup, InlineKeyboardBu
 # ─── texts that should never be treated as a character name ──────────────────
 TOP_LEVEL_BUTTON_TEXTS = {
     "🎮 game menu",
-    "🔧 host tools",
 }
 
 PRIVATE_BUTTON_TEXTS = {
@@ -29,6 +28,7 @@ PRIVATE_BUTTON_TEXTS = {
     "📖 send guide to group",
     "📜 send character list to group",
     "⛔ force stop / kill game",
+    "🔧 host tools",
 }
 
 
@@ -69,8 +69,7 @@ def get_keyboard(session, uid: int) -> ReplyKeyboardMarkup:
                 [
                     ["💬 Message Player", "🔮 Divine Fate"],
                     ["📝 Notes", "🎯 Sus Points"],
-                    ["📜 Show Characters", "📋 Status"],
-                    ["🔧 Host Tools"],
+                    ["📜 Show Characters"],
                     ["❓ Help", "📖 Guide"],
                 ],
                 resize_keyboard=True,
@@ -79,7 +78,7 @@ def get_keyboard(session, uid: int) -> ReplyKeyboardMarkup:
             [
                 ["💬 Message Player", "🔮 Divine Fate"],
                 ["📝 Notes", "🎯 Sus Points"],
-                ["📜 Show Characters", "📋 Status"],
+                ["📜 Show Characters"],
                 ["❓ Help", "📖 Guide"],
             ],
             resize_keyboard=True,
@@ -114,7 +113,6 @@ def game_menu_inline(session, uid: int) -> InlineKeyboardMarkup:
         [InlineKeyboardButton("📊 Show Sus Points", callback_data="gm_sus_view")],
         [InlineKeyboardButton("📝 Notes", callback_data="gm_notes")],
         [InlineKeyboardButton("❓ Help", callback_data="gm_help")],
-        [InlineKeyboardButton("📋 Status", callback_data="gm_status")],
         [InlineKeyboardButton("↩ Back", callback_data="menu_back")],
     ]
     return InlineKeyboardMarkup(rows)

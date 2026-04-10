@@ -254,28 +254,66 @@ def _generate_game_id() -> str:
 
 def _guide_text() -> str:
     return (
-        "📖 <b>Alice Is Missing — How to Play</b>\n\n"
-        "<b>The Story</b>\n"
-        "It is Saturday. Alice has been missing since Wednesday.\n"
-        "You are people who knew her. Over 95 minutes, through messages alone, you uncover what happened.\n\n"
-        "<b>The Rules</b>\n"
-        "• This is a <i>silent</i> game — everything happens through text.\n"
-        "• Stay in character. Use <i>(parentheses)</i> to step out.\n"
-        "• Use <b>(X)</b> to remove something that crosses a line.\n"
-        "• Characters never truly meet — find a reason they don't.\n\n"
-        "<b>Your Character</b>\n"
-        "Before the game, create someone new. Think about their relationship to Alice and to the other characters.\n\n"
-        "<b>Secrets</b>\n"
-        "Each character has multiple hidden truths. You receive yours when the game starts.\n\n"
-        "<b>Trigger Cards</b>\n"
-        "The bot sends trigger cards throughout the game — story prompts to act on.\n\n"
-        "<b>Suspicion Points</b>\n"
-        "The host awards sus points when a character is accused or implicated.\n\n"
-        "<b>Divine Fate 🔮</b>\n"
-        "When exploring something uncertain, ask the oracle. If fate allows it, it becomes true.\n\n"
-        "<b>Endings</b>\n"
-        "When time runs out (95 min), send one final in-character message. Then reveal everything.\n\n"
-        "<i>Trust carefully. Speak intentionally. Use silence.</i>"
+        "📖 <b>Alice Is Missing — Custom Game Guide</b>\n\n"
+        "━━━━━━━━━━━━━━━━━━━━\n\n"
+        "<b>🎬 The Story Begins</b>\n\n"
+        "It is Saturday, the first day of winter break.\n\n"
+        "Alice has been missing since Wednesday — three days now. No one has seen her. No one knows where she is.\n\n"
+        "You are people who knew Alice. Over the next 90 minutes, through messages alone, you will uncover what happened.\n\n"
+        "Or you won’t.\n\n"
+        "━━━━━━━━━━━━━━━━━━━━\n\n"
+        "<b>🧠 How This Works</b>\n\n"
+        "This is a silent roleplaying game. Everything happens through text.\n\n"
+        "Stay in character. If needed, step out using <i>(parentheses)</i>. If something crosses a line, use <b>(X)</b> to remove it.\n\n"
+        "There will be silence. That’s part of the game. Let it build tension, or use it to reach out privately.\n\n"
+        "Characters never truly meet—if they would, create a reason they don’t.\n\n"
+        "━━━━━━━━━━━━━━━━━━━━\n\n"
+        "<b>👤 Your Character</b>\n\n"
+        "Before the game begins, you create someone new.\n\n"
+        "Think about how they act, how others see them, and most importantly, who they were to Alice and to everyone else.\n\n"
+        "These relationships drive the story.\n\n"
+        "━━━━━━━━━━━━━━━━━━━━\n\n"
+        "<b>🔐 Your Secrets</b>\n\n"
+        "Every character hides multiple truths:\n\n"
+        "A shared secret.\n"
+        "A secret involving Alice.\n"
+        "A darker secret tied to the crime.\n"
+        "And one wild, unpredictable secret.\n\n"
+        "You don’t need to reveal everything immediately...\n\n"
+        "━━━━━━━━━━━━━━━━━━━━\n\n"
+        "<b>🕵️ Suspicion</b>\n\n"
+        "Accuse other characters. If most players agree, the character is given sus points.\n\n"
+        "If said character is mentioned in the story in any way through the deck, the character is given sus points.\n\n"
+        "By the end, the most suspected become the main suspects—and one may be chosen randomly as the killer.\n\n"
+        "━━━━━━━━━━━━━━━━━━━━\n\n"
+        "<b>🃏 Clues</b>\n\n"
+        "Clues guide the story.\n\n"
+        "When you receive one, bring it into the narrative and share it. If duplicates appear, reveal them in clockwise order.\n\n"
+        "The real truth about Alice won’t come easily. It only appears at the right moment.\n\n"
+        "━━━━━━━━━━━━━━━━━━━━\n\n"
+        "<b>🤖 The Bot</b>\n\n"
+        "The bot drives the story.\n\n"
+        "It may give secrets, send optional prompts, allow private or anonymous messages, and answer questions through <b>Divine Fate</b>.\n\n"
+        "━━━━━━━━━━━━━━━━━━━━\n\n"
+        "<b>🔮 Fate & Exploration</b>\n\n"
+        "When you explore something uncertain, you rely on fate.\n\n"
+        "You may discover something—but before it becomes real, you ask.\n\n"
+        "If fate allows it, you connect it to the story. If not, it leads nowhere. You may want to tie a character to it by using the deck.\n\n"
+        "Not every path has answers.\n\n"
+        "━━━━━━━━━━━━━━━━━━━━\n\n"
+        "<b>🏁 Endings</b>\n\n"
+        "What happens depends on what you uncover.\n\n"
+        "Low suspicion may mean no crime. Hidden secrets may mean Alice is never found. Wrong accusations may lead you astray. So accuse people carefully.\n\n"
+        "━━━━━━━━━━━━━━━━━━━━\n\n"
+        "<b>⏳ The End</b>\n\n"
+        "When time runs out, everything stops.\n\n"
+        "You get one final message in character.\n\n"
+        "Then it’s over.\n\n"
+        "━━━━━━━━━━━━━━━━━━━━\n\n"
+        "<b>💭 Final Thought</b>\n\n"
+        "Trust carefully. Speak intentionally. Use silence.\n\n"
+        "Alice is missing.\n\n"
+        "What happened to her… is already part of your story."
     )
 
 
@@ -421,7 +459,7 @@ def _char_list_text(s: GameSession, dev_mode: bool = False) -> str:
             lines.append(f"{i}. {prefix} {html.escape(ps.character_name)}{crown}")
         i += 1
     for npc in s.npc_names:
-        lines.append(f"{i}. 🎭 {html.escape(npc)} <i>(NPC)</i>")
+        lines.append(f"{i}. 🎭 {html.escape(npc)}")
         i += 1
     if i == 1:
         lines.append("<i>(no characters yet)</i>")
@@ -506,6 +544,7 @@ async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "• /startgame — start the game\n"
         "• /endgame — end the game\n"
         "• /forcestop — stop the bot and active sessions\n"
+        "• /hosttools — open the host tools panel\n"
         "• /sus — award suspicion points\n"
         "• /addnpc — add an NPC\n"
         "• /sendguide — send the guide to the group\n"
@@ -731,6 +770,31 @@ async def cmd_status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         parse_mode="HTML",
         reply_markup=kb,
     )
+
+
+async def cmd_hosttools(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    uid = update.effective_user.id
+    priv = update.effective_chat.type == "private"
+
+    if bot_halted:
+        await update.message.reply_text(
+            "⛔ The bot is currently stopped.\n"
+            "Use /start in DM to restart it first.",
+            reply_markup=get_keyboard(None, uid) if priv else None,
+        )
+        return
+
+    s = _session_for_user(uid)
+    kb = get_keyboard(s, uid) if priv else None
+
+    if not s:
+        await update.message.reply_text("📭 No active game found.", reply_markup=kb)
+        return
+    if uid != s.host_id:
+        await update.message.reply_text("Only the host can use host tools.", reply_markup=kb)
+        return
+
+    await _show_host_tools_message(update, context, s, "main")
 
 
 async def cmd_characterlist(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1612,28 +1676,6 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             )
             return
 
-        if data == "gm_status":
-            s = find_player_session(user_id)
-            if not s:
-                await query.answer("No game found.", show_alert=True)
-                return
-            dev = user_id in dev_mode_users and user_id == s.host_id
-            state = "🏠 Lobby" if s.is_lobby() else ("🔴 Ended" if s.ended else f"🟢 Active · {s.game_phase()} phase · {int(s.elapsed_minutes())} min elapsed")
-            await query.answer()
-            await context.bot.send_message(
-                chat_id=user_id,
-                text=(
-                    f"📋 <b>Game Status</b>\n"
-                    f"<b>ID:</b> <code>{s.game_id}</code>\n"
-                    f"<b>Status:</b> {state}\n"
-                    f"<b>Host:</b> {html.escape(s.host_telegram_name)}\n\n"
-                    f"{s.roster_text(include_dummies=dev)}"
-                ),
-                parse_mode="HTML",
-                reply_markup=get_keyboard(s, user_id),
-            )
-            return
-
         if data == "gm_fate":
             s = find_player_session(user_id)
             if not s or not s.is_active():
@@ -2016,9 +2058,9 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
                     preview += "..."
                 await query.edit_message_text(
                     f"✏️ <b>Editing note {idx + 1}</b>\n\n"
-                    f"<b>Current note</b>\n"
-                    f"└ {preview}\n\n"
-                    f"Send the updated text as a new message, or type <code>cancel</code>:"
+                    f"📝 <b>Current note:</b> {preview}\n\n"
+                    f"Send the updated text as a new message, or type <code>cancel</code>:",
+                    parse_mode="HTML",
                 )
             return
 
@@ -2074,9 +2116,9 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
                 pending_dm_route[user_id] = "telegram"
                 await query.answer()
                 await query.edit_message_text(
-                    "Open their Telegram DM and send the message there.",
+                    "💬 Open Telegram and send the message there.",
                     reply_markup=InlineKeyboardMarkup([
-                        [InlineKeyboardButton("Open Telegram DM", url=url)],
+                        [InlineKeyboardButton("Through Telegram", url=url)],
                         [InlineKeyboardButton("↩ Back", callback_data="dm_cancel")],
                     ]),
                 )
@@ -2218,26 +2260,6 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         )
         return
 
-    if tl == "🎮 game menu":
-        if not s:
-            await update.message.reply_text("No game found.", reply_markup=get_keyboard(s, user.id))
-            return
-        if user.id not in s.players and user.id != s.host_id:
-            await update.message.reply_text("You're not in this game.", reply_markup=get_keyboard(s, user.id))
-            return
-        await _show_game_menu_message(update, context, s)
-        return
-
-    if tl == "🔧 host tools":
-        if not s:
-            await update.message.reply_text("No game found.", reply_markup=get_keyboard(s, user.id))
-            return
-        if user.id != s.host_id:
-            await update.message.reply_text("Host tools are host-only.", reply_markup=get_keyboard(s, user.id))
-            return
-        await _show_host_tools_message(update, context, s)
-        return
-
     if tl in TOP_LEVEL_BUTTON_TEXTS:
         if tl == "🎮 game menu":
             if not s:
@@ -2247,16 +2269,6 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
                 await update.message.reply_text("You're not in this game.", reply_markup=get_keyboard(s, user.id))
                 return
             await _show_game_menu_message(update, context, s)
-            return
-
-        if tl == "🔧 host tools":
-            if not s:
-                await update.message.reply_text("No game found.", reply_markup=get_keyboard(s, user.id))
-                return
-            if user.id != s.host_id:
-                await update.message.reply_text("Host tools are host-only.", reply_markup=get_keyboard(s, user.id))
-                return
-            await _show_host_tools_message(update, context, s)
             return
 
     if tl == "🔗 join game":
@@ -2273,10 +2285,6 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     if tl == "📖 guide":
         await cmd_guide(update, context)
-        return
-
-    if tl == "📋 status":
-        await cmd_status(update, context)
         return
 
     if tl == "🔮 divine fate":
@@ -2642,17 +2650,18 @@ async def _show_player_pick(user_id: int, s: GameSession, reply_msg, context) ->
 async def _show_message_route_pick(user_id: int, target_uid: int, s: GameSession, query) -> None:
     target = s.players[target_uid]
     target_label = target.character_name if target.character_name != "Awaiting name" else target.telegram_name
+    telegram_url = _telegram_dm_url(target.username)
     pending_dm_target[user_id] = target_uid
+    route_rows = [[InlineKeyboardButton("Through bot", callback_data="dm_route:bot")]]
+    if telegram_url:
+        route_rows[0].append(InlineKeyboardButton("Through Telegram", url=telegram_url))
+    else:
+        route_rows[0].append(InlineKeyboardButton("Through Telegram", callback_data="dm_route:telegram"))
+    route_rows.append([InlineKeyboardButton("↩ Cancel", callback_data="dm_cancel")])
     await query.edit_message_text(
         f"💬 Message <b>{html.escape(target_label)}</b> through…",
         parse_mode="HTML",
-        reply_markup=InlineKeyboardMarkup([
-            [
-                InlineKeyboardButton("Through bot", callback_data="dm_route:bot"),
-                InlineKeyboardButton("Through Telegram", callback_data="dm_route:telegram"),
-            ],
-            [InlineKeyboardButton("↩ Cancel", callback_data="dm_cancel")],
-        ]),
+        reply_markup=InlineKeyboardMarkup(route_rows),
     )
 
 

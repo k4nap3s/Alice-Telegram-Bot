@@ -84,7 +84,7 @@ class GameSession:
                 prefix = "🤖" if uid < 0 else "👤"
                 lines.append(f"{prefix} {ps.character_name}{crown}")
         for npc in self.npc_names:
-            lines.append(f"🎭 {npc} (NPC)")
+            lines.append(f"🎭 {npc}")
         return "\n".join(lines) if lines else "(no players yet)"
 
     def all_character_names(self, dev_mode: bool = False) -> list:
