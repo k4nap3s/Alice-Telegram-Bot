@@ -445,7 +445,7 @@ async def _show_endgame_confirmation(update: Update, s: GameSession) -> None:
 # Character list helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _char_list_text(s: GameSession, dev_mode: bool = False) -> str:
+def _char_list_text(s: GameSession, dev_mode: bool = False, show_name_hint: bool = False) -> str:
     lines = ["📜 <b>Characters</b>\n"]
     i = 1
     for uid, ps in s.players.items():
@@ -463,6 +463,9 @@ def _char_list_text(s: GameSession, dev_mode: bool = False) -> str:
         i += 1
     if i == 1:
         lines.append("<i>(no characters yet)</i>")
+    if show_name_hint:
+        lines.append("")
+        lines.append("✏️ <b>To change your name:</b> open DM with the bot and send <code>/name NEW NAME</code>.")
     return "\n".join(lines)
 
 
@@ -819,7 +822,7 @@ async def cmd_characterlist(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         )
     else:
         await update.message.reply_text(
-            text, parse_mode="HTML",
+            _char_list_text(s, dev_mode=dev, show_name_hint=True), parse_mode="HTML",
             reply_markup=None,
         )
 
@@ -986,7 +989,11 @@ async def cmd_sendcharlist(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
     await context.bot.send_message(
         chat_id=s.lobby_chat_id,
-        text=_char_list_text(s, dev_mode=user.id in dev_mode_users and user.id == s.host_id),
+        text=_char_list_text(
+            s,
+            dev_mode=user.id in dev_mode_users and user.id == s.host_id,
+            show_name_hint=True,
+        ),
         parse_mode="HTML",
     )
     await update.message.reply_text("📜 Character list sent to the group.", reply_markup=kb)
@@ -1364,7 +1371,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             dev = user_id in dev_mode_users and user_id == s.host_id
             await context.bot.send_message(
                 chat_id=query.message.chat_id,
-                text=_char_list_text(s, dev_mode=dev),
+                text=_char_list_text(s, dev_mode=dev, show_name_hint=True),
                 parse_mode="HTML",
                 reply_markup=None,
             )
@@ -1427,7 +1434,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             dev = user_id in dev_mode_users and user_id == s.host_id
             await query.answer()
             await query.edit_message_text(
-                _char_list_text(s, dev_mode=dev),
+                _char_list_text(s, dev_mode=dev, show_name_hint=True),
                 parse_mode="HTML",
                 reply_markup=None,
             )
@@ -1631,7 +1638,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             await query.answer()
             await context.bot.send_message(
                 chat_id=user_id,
-                text=_char_list_text(s, dev_mode=user_id in dev_mode_users and user_id == s.host_id),
+                text=_char_list_text(s, dev_mode=user_id in dev_mode_users and user_id == s.host_id, show_name_hint=False),
                 parse_mode="HTML",
                 reply_markup=_character_list_dm_markup(s, user_id),
             )
@@ -1727,7 +1734,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
                 await query.answer("Host only.", show_alert=True)
                 return
             menu = data.split(":", 1)[1]
-            if menu not in {"main", "game", "sus", "roster", "info"}:
+            if menu not in {"main", "game", "roster", "info"}:
                 await query.answer("Unknown menu.", show_alert=True)
                 return
             await query.answer()
@@ -1766,7 +1773,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             await query.answer("Character list sent to group.")
             await context.bot.send_message(
                 chat_id=s.lobby_chat_id,
-                text=_char_list_text(s, dev_mode=user_id in dev_mode_users),
+                text=_char_list_text(s, dev_mode=user_id in dev_mode_users, show_name_hint=True),
                 parse_mode="HTML",
             )
             await _show_host_tools_panel(query, s, "info", "📜 Character list sent to the group.")
@@ -2241,7 +2248,7 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         return
 
     if tl == "🎯 sus points":
-        await cmd_showsus(update, context)
+        await cmd_sus(update, context)
         return
 
     if tl == "➕ add npc":

@@ -69,7 +69,6 @@ def get_keyboard(session, uid: int) -> ReplyKeyboardMarkup:
                 [
                     ["💬 Message Player", "🔮 Divine Fate"],
                     ["📝 Notes", "🎯 Sus Points"],
-                    ["📜 Show Characters"],
                     ["❓ Help", "📖 Guide"],
                 ],
                 resize_keyboard=True,
@@ -77,8 +76,7 @@ def get_keyboard(session, uid: int) -> ReplyKeyboardMarkup:
         return ReplyKeyboardMarkup(
             [
                 ["💬 Message Player", "🔮 Divine Fate"],
-                ["📝 Notes", "🎯 Sus Points"],
-                ["📜 Show Characters"],
+                ["📝 Notes"],
                 ["❓ Help", "📖 Guide"],
             ],
             resize_keyboard=True,
@@ -109,8 +107,6 @@ def game_menu_inline(session, uid: int) -> InlineKeyboardMarkup:
             InlineKeyboardButton("💬 Message Player", callback_data="gm_message"),
             InlineKeyboardButton("🔮 Oracle / Divine Fate", callback_data="gm_fate"),
         ],
-        [InlineKeyboardButton("📜 Show Character List", callback_data="gm_charlist")],
-        [InlineKeyboardButton("📊 Show Sus Points", callback_data="gm_sus_view")],
         [InlineKeyboardButton("📝 Notes", callback_data="gm_notes")],
         [InlineKeyboardButton("❓ Help", callback_data="gm_help")],
         [InlineKeyboardButton("↩ Back", callback_data="menu_back")],
@@ -128,7 +124,6 @@ def host_tools_inline(session, menu: str = "main") -> InlineKeyboardMarkup:
     if menu == "main":
         return InlineKeyboardMarkup([
             [InlineKeyboardButton("🎮 Game Control", callback_data="ht_menu:game")],
-            [InlineKeyboardButton("🎯 Suspicion", callback_data="ht_menu:sus")],
             [InlineKeyboardButton("🧭 Roster", callback_data="ht_menu:roster")],
             [InlineKeyboardButton("📖 Info & Guide", callback_data="ht_menu:info")],
             [InlineKeyboardButton("↩ Back", callback_data="ht_back")],
@@ -143,16 +138,6 @@ def host_tools_inline(session, menu: str = "main") -> InlineKeyboardMarkup:
         rows.append([InlineKeyboardButton("⛔ Force Stop Bot", callback_data="ht_force_stop")])
         rows.append([InlineKeyboardButton("↩ Back", callback_data="ht_back")])
         return InlineKeyboardMarkup(rows)
-
-    if menu == "sus":
-        return InlineKeyboardMarkup([
-            [InlineKeyboardButton("➕ Add Sus Point", callback_data="sus_award_list")],
-            [
-                InlineKeyboardButton("📊 DM Table", callback_data="sus_show_table"),
-                InlineKeyboardButton("📊 Post Group", callback_data="sus_show_group"),
-            ],
-            [InlineKeyboardButton("↩ Back", callback_data="ht_back")],
-        ])
 
     if menu == "roster":
         return InlineKeyboardMarkup([
