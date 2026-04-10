@@ -151,21 +151,21 @@ if build_lobby_text is None:
 
 if build_lobby_keyboard is None:
     def build_lobby_keyboard(s: GameSession):
-        if s.is_lobby():
-            return InlineKeyboardMarkup([
-                [InlineKeyboardButton("🔗 Join", callback_data=f"join:{s.game_id}")],
-                [
-                    InlineKeyboardButton("📜 Characters", callback_data="char_list"),
-                    InlineKeyboardButton("▶️ Start", callback_data="game_start"),
-                ],
-                [InlineKeyboardButton("🛑 End Game", callback_data="game_end")],
-            ])
-        if s.is_active():
-            return InlineKeyboardMarkup([
-                [InlineKeyboardButton("📜 Characters", callback_data="char_list")],
-                [InlineKeyboardButton("🛑 End Game", callback_data="game_end")],
-            ])
-        return InlineKeyboardMarkup([[InlineKeyboardButton("📜 Characters", callback_data="char_list")]])
+        return InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton("📜 Characters", callback_data="char_list"),
+                InlineKeyboardButton("🎯 Sus Points", callback_data="sus_show_group"),
+            ],
+            [
+                InlineKeyboardButton("📖 Guide", callback_data="group_guide"),
+                InlineKeyboardButton("❓ Help", callback_data="group_help"),
+            ],
+            [
+                InlineKeyboardButton("🔗 Join", callback_data=f"join:{s.game_id}"),
+                InlineKeyboardButton("▶️ Start", callback_data="game_start"),
+            ],
+            [InlineKeyboardButton("🛑 End Game", callback_data="game_end")],
+        ])
 
 
 async def refresh_group_lobby(bot, s: GameSession) -> None:
@@ -471,6 +471,38 @@ def _char_list_inline(s: GameSession) -> InlineKeyboardMarkup | None:
     return None
 
 
+def _help_text() -> str:
+    return (
+        "🕵️ <b>Commands</b>\n\n"
+        "<b>Group chat</b>\n"
+        "• /newgame — create a lobby\n"
+        "• /status — show the game state\n"
+        "• /characterlist — show the roster\n"
+        "• /showsus — show suspicion points\n\n"
+        "<b>Private DM</b>\n"
+        "• /start — open or restart the bot DM\n"
+        "• /join GAMEID — join a game\n"
+        "• /name NAME — set or change your character name\n"
+        "• /message — send a DM to another player\n"
+        "• /notes — view or edit your notes\n"
+        "• /fate — ask the oracle a yes/no question\n"
+        "• /cancel — cancel the current pending action\n"
+        "• /guide — how to play\n\n"
+        "<b>Host only</b>\n"
+        "• /startgame — start the game\n"
+        "• /endgame — end the game\n"
+        "• /forcestop — stop the bot and active sessions\n"
+        "• /hosttools — open the host tools panel\n"
+        "• /sus — award suspicion points\n"
+        "• /addnpc — add an NPC\n"
+        "• /sendguide — send the guide to the group\n"
+        "• /sendcharlist — send the character list to the group\n"
+        "• /postsus — send the suspicion table to the group\n\n"
+        "<b>Dev / testing</b>\n"
+        "• /dev alice — toggle solo test mode\n"
+    )
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 # COMMAND HANDLERS
 # ═══════════════════════════════════════════════════════════════════════════
@@ -524,37 +556,8 @@ async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     priv = update.effective_chat.type == "private"
     s = find_player_session(uid) if priv else None
 
-    text = (
-        "🕵️ <b>Commands</b>\n\n"
-        "<b>Group chat</b>\n"
-        "• /newgame — create a lobby\n"
-        "• /status — show the game state\n"
-        "• /characterlist — show the roster\n"
-        "• /showsus — show suspicion points\n\n"
-        "<b>Private DM</b>\n"
-        "• /start — open or restart the bot DM\n"
-        "• /join GAMEID — join a game\n"
-        "• /name NAME — set or change your character name\n"
-        "• /message — send a DM to another player\n"
-        "• /notes — view or edit your notes\n"
-        "• /fate — ask the oracle a yes/no question\n"
-        "• /cancel — cancel the current pending action\n"
-        "• /guide — how to play\n\n"
-        "<b>Host only</b>\n"
-        "• /startgame — start the game\n"
-        "• /endgame — end the game\n"
-        "• /forcestop — stop the bot and active sessions\n"
-        "• /hosttools — open the host tools panel\n"
-        "• /sus — award suspicion points\n"
-        "• /addnpc — add an NPC\n"
-        "• /sendguide — send the guide to the group\n"
-        "• /sendcharlist — send the character list to the group\n"
-        "• /postsus — send the suspicion table to the group\n\n"
-        "<b>Dev / testing</b>\n"
-        "• /dev alice — toggle solo test mode\n"
-    )
     await update.effective_message.reply_text(
-        text,
+        _help_text(),
         parse_mode="HTML",
         reply_markup=get_keyboard(s, uid) if priv else None,
     )
@@ -1372,7 +1375,6 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
                 parse_mode="HTML",
                 reply_markup=None,
             )
-            await update_group_lobby(context.bot, s)
             return
 
         # ── CHARACTER RENAME MENU (notes-style picker) ────────────────────
@@ -1894,7 +1896,32 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
                 text=f"📊 <b>Suspicion Points</b>\n\n{sus_table_text(s)}",
                 parse_mode="HTML",
             )
-            await update_group_lobby(context.bot, s)
+            return
+
+        if data == "group_guide":
+            s = find_session_by_chat(query.message.chat_id)
+            if not s:
+                s = find_player_session(user_id)
+            if not s:
+                await query.answer("No game found.", show_alert=True)
+                return
+            await query.answer()
+            await _send_guide_asset(context.bot, s.lobby_chat_id)
+            return
+
+        if data == "group_help":
+            s = find_session_by_chat(query.message.chat_id)
+            if not s:
+                s = find_player_session(user_id)
+            if not s:
+                await query.answer("No game found.", show_alert=True)
+                return
+            await query.answer()
+            await context.bot.send_message(
+                chat_id=s.lobby_chat_id,
+                text=_help_text(),
+                parse_mode="HTML",
+            )
             return
 
         # ── SUSPICION: show in DM ─────────────────────────────────────────

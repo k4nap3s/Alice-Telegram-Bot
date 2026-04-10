@@ -207,24 +207,21 @@ def clear_session_runtime_state(s: GameSession) -> None:
 
 def _lobby_keyboard(s: GameSession) -> InlineKeyboardMarkup:
     """Compact inline keyboard for the pinned group lobby card — NO close button."""
-    if s.is_lobby():
-        return InlineKeyboardMarkup([
-            [InlineKeyboardButton("🔗 Join", callback_data=f"join:{s.game_id}")],
-            [
-                InlineKeyboardButton("📜 Characters", callback_data="char_list"),
-                InlineKeyboardButton("▶️ Start", callback_data="game_start"),
-            ],
-            [InlineKeyboardButton("🛑 End Game", callback_data="game_end")],
-        ])
-    elif s.is_active():
-        return InlineKeyboardMarkup([
-            [InlineKeyboardButton("📜 Characters", callback_data="char_list")],
-            [InlineKeyboardButton("🛑 End Game", callback_data="game_end")],
-        ])
-    else:
-        return InlineKeyboardMarkup([
-            [InlineKeyboardButton("📜 Characters", callback_data="char_list")],
-        ])
+    return InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton("📜 Characters", callback_data="char_list"),
+            InlineKeyboardButton("🎯 Sus Points", callback_data="sus_show_group"),
+        ],
+        [
+            InlineKeyboardButton("📖 Guide", callback_data="group_guide"),
+            InlineKeyboardButton("❓ Help", callback_data="group_help"),
+        ],
+        [
+            InlineKeyboardButton("🔗 Join", callback_data=f"join:{s.game_id}"),
+            InlineKeyboardButton("▶️ Start", callback_data="game_start"),
+        ],
+        [InlineKeyboardButton("🛑 End Game", callback_data="game_end")],
+    ])
 
 
 def _lobby_text(s: GameSession) -> str:
@@ -266,14 +263,6 @@ async def update_group_lobby(bot: Bot, s: GameSession) -> None:
                     parse_mode="HTML",
                     reply_markup=markup,
                 )
-                try:
-                    await bot.pin_chat_message(
-                        chat_id=s.lobby_chat_id,
-                        message_id=s.lobby_msg_id,
-                        disable_notification=True,
-                    )
-                except Exception as e:
-                    logger.warning("Could not pin edited lobby message: %s", e)
                 return
             except Exception:
                 pass
