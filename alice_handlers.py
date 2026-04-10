@@ -151,11 +151,10 @@ if build_lobby_text is None:
 
 if build_lobby_keyboard is None:
     def build_lobby_keyboard(s: GameSession):
-        return InlineKeyboardMarkup([
-            [
-                InlineKeyboardButton("📜 Characters", callback_data="char_list"),
-                InlineKeyboardButton("🎯 Sus Points", callback_data="sus_show_group"),
-            ],
+        rows = [[InlineKeyboardButton("📜 Characters", callback_data="char_list")]]
+        if s.is_active():
+            rows[0].append(InlineKeyboardButton("🎯 Sus Points", callback_data="sus_show_group"))
+        rows.extend([
             [
                 InlineKeyboardButton("📖 Guide", callback_data="group_guide"),
                 InlineKeyboardButton("❓ Help", callback_data="group_help"),
@@ -166,6 +165,7 @@ if build_lobby_keyboard is None:
             ],
             [InlineKeyboardButton("🛑 End Game", callback_data="game_end")],
         ])
+        return InlineKeyboardMarkup(rows)
 
 
 async def refresh_group_lobby(bot, s: GameSession) -> None:
@@ -464,6 +464,14 @@ def _char_list_text(s: GameSession, dev_mode: bool = False, show_name_hint: bool
         lines.append("")
         lines.append("✏️ <b>To change your name:</b> open DM with the bot and send <code>/name NEW NAME</code>.")
     return "\n".join(lines)
+
+
+def _note_action_label(action: str) -> str:
+    return {
+        "del": "discard",
+        "view": "review",
+        "edit": "revise",
+    }.get(action, action)
 
 
 def _char_list_inline(s: GameSession) -> InlineKeyboardMarkup | None:
@@ -1890,6 +1898,9 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             if not s:
                 await query.answer("No game found.", show_alert=True)
                 return
+            if not s.is_active():
+                await query.answer("Suspicion points are available during the active game only.", show_alert=True)
+                return
             await query.answer()
             await context.bot.send_message(
                 chat_id=s.lobby_chat_id,
@@ -2032,7 +2043,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
                 return
             pending_note[user_id] = "add"
             await query.answer()
-            await query.edit_message_text("✏️ Type your note now:")
+            await query.edit_message_text("✏️ <b>Write your note</b>\n\nSend the text as a new message, or type <code>cancel</code>.", parse_mode="HTML")
             return
 
         # ── NOTES: pick action ────────────────────────────────────────────
@@ -2048,7 +2059,8 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
                 return
             await query.answer()
             await query.edit_message_text(
-                f"Pick a note to {action}:",
+                f"📝 <b>Choose a note to {_note_action_label(action)}</b>",
+                parse_mode="HTML",
                 reply_markup=notes_pick_markup(ps, action),
             )
             return
@@ -2090,7 +2102,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
                 await query.edit_message_text(
                     f"✏️ <b>Editing note {idx + 1}</b>\n\n"
                     f"📝 <b>Current note:</b> {preview}\n\n"
-                    f"Send the updated text as a new message, or type <code>cancel</code>:",
+                    f"Send the revised note as a new message, or type <code>cancel</code>.",
                     parse_mode="HTML",
                 )
             return
@@ -2351,15 +2363,15 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         note_content = text[:300]
         if mode == "add":
             ps.notes.append(note_content)
-            msg = f"✅ Note saved ({len(ps.notes)} total)"
+            msg = f"✅ Note recorded ({len(ps.notes)} total)."
         else:
             idx = int(mode.split(":", 1)[1])
             if idx < len(ps.notes):
                 ps.notes[idx] = note_content
-                msg = f"✅ Note {idx + 1} updated"
+                msg = f"✅ Note {idx + 1} revised."
             else:
                 ps.notes.append(note_content)
-                msg = "✅ Note saved"
+                msg = "✅ Note recorded."
 
         save_lobby_state()
 

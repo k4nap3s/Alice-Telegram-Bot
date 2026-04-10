@@ -207,11 +207,12 @@ def clear_session_runtime_state(s: GameSession) -> None:
 
 def _lobby_keyboard(s: GameSession) -> InlineKeyboardMarkup:
     """Compact inline keyboard for the pinned group lobby card — NO close button."""
-    return InlineKeyboardMarkup([
-        [
-            InlineKeyboardButton("📜 Characters", callback_data="char_list"),
-            InlineKeyboardButton("🎯 Sus Points", callback_data="sus_show_group"),
-        ],
+    rows = [[
+        InlineKeyboardButton("📜 Characters", callback_data="char_list"),
+    ]]
+    if s.is_active():
+        rows[0].append(InlineKeyboardButton("🎯 Sus Points", callback_data="sus_show_group"))
+    rows.extend([
         [
             InlineKeyboardButton("📖 Guide", callback_data="group_guide"),
             InlineKeyboardButton("❓ Help", callback_data="group_help"),
@@ -222,6 +223,7 @@ def _lobby_keyboard(s: GameSession) -> InlineKeyboardMarkup:
         ],
         [InlineKeyboardButton("🛑 End Game", callback_data="game_end")],
     ])
+    return InlineKeyboardMarkup(rows)
 
 
 def _lobby_text(s: GameSession) -> str:
@@ -598,8 +600,8 @@ async def restore_active_sessions(app) -> None:
 
 def notes_text(ps: PlayerState) -> str:
     if not ps.notes:
-        return "📝 <b>Your Notes</b>\n\n(No notes yet — add one to track clues!)"
-    lines = ["📝 <b>Your Notes</b>\n"]
+        return "📝 <b>Your Journal</b>\n\n(No entries yet. Add one to keep track of clues.)"
+    lines = ["📝 <b>Your Journal</b>\n"]
     for i, note in enumerate(ps.notes, 1):
         preview = note[:30] + ("..." if len(note) > 30 else "")
         lines.append(f"{i}. {html.escape(preview)}")

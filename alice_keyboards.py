@@ -159,12 +159,12 @@ def host_tools_inline(session, menu: str = "main") -> InlineKeyboardMarkup:
 # ─── Notes ────────────────────────────────────────────────────────────────────
 
 def notes_markup(ps) -> InlineKeyboardMarkup:
-    rows = [[InlineKeyboardButton("➕ Add Note", callback_data="note_add")]]
+    rows = [[InlineKeyboardButton("➕ Write Note", callback_data="note_add")]]
     if ps.notes:
         rows.append([
-            InlineKeyboardButton("👁 View", callback_data="note_pick:view"),
-            InlineKeyboardButton("✏️ Edit", callback_data="note_pick:edit"),
-            InlineKeyboardButton("🗑 Delete", callback_data="note_pick:del"),
+            InlineKeyboardButton("👁 Review", callback_data="note_pick:view"),
+            InlineKeyboardButton("✏️ Revise", callback_data="note_pick:edit"),
+            InlineKeyboardButton("🗑 Discard", callback_data="note_pick:del"),
         ])
     return InlineKeyboardMarkup(rows)
 
