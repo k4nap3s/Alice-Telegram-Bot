@@ -39,6 +39,8 @@ class GameSession:
     trigger_task: object = None
     reminder_task: object = None
     trigger_inflight: set = field(default_factory=set)
+    triggers_paused: bool = False
+    final_timer_prompt_sent: bool = False
 
     def is_lobby(self) -> bool:
         return not self.started and not self.ended

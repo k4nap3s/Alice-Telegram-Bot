@@ -114,6 +114,8 @@ def save_lobby_state() -> None:
                 "start_time": st_str,
                 "lobby_msg_id": s.lobby_msg_id,
                 "sus_points": s.sus_points,
+                "triggers_paused": s.triggers_paused,
+                "final_timer_prompt_sent": s.final_timer_prompt_sent,
             }
         with open(_LOBBY_STATE_FILE, "w") as f:
             json.dump(data, f, indent=2)
@@ -172,6 +174,8 @@ def load_lobby_state() -> None:
                 start_time=start_time,
                 lobby_msg_id=raw.get("lobby_msg_id"),
                 sus_points=raw.get("sus_points", {}),
+                triggers_paused=raw.get("triggers_paused", False),
+                final_timer_prompt_sent=raw.get("final_timer_prompt_sent", False),
             )
             games[gid] = s
             seen_lobby_chats.add(lobby_chat_id)
@@ -392,6 +396,8 @@ async def game_trigger_scheduler(s: GameSession, bot: Bot) -> None:
 
     try:
         while not s.ended:
+            if s.triggers_paused:
+                return
             now = datetime.now(tz=UTC)
             if not s.start_time:
                 await asyncio.sleep(1)
@@ -407,6 +413,8 @@ async def game_trigger_scheduler(s: GameSession, bot: Bot) -> None:
             progress_made = False
             for uid in active_player_ids:
                 if s.ended:
+                    return
+                if s.triggers_paused:
                     return
                 if uid in s.trigger_inflight:
                     continue
@@ -469,15 +477,14 @@ async def game_trigger_scheduler(s: GameSession, bot: Bot) -> None:
 async def group_reminder_loop(s: GameSession, bot: Bot) -> None:
     """Send group reminders at scheduled time marks.
 
-    This loop announces scheduled reminders and force-ends the session when
-    the timer expires so no trigger tasks keep running past the finale.
+    This loop announces scheduled reminders and then asks the host whether to
+    end the session when the final timer mark is reached.
     """
     schedule = _group_reminder_schedule()
     sent_marks: set[object] = set()
     try:
         while not s.ended:
             elapsed = s.elapsed_minutes()
-            remaining = GAME_DURATION_MINUTES - elapsed
 
             for idx, (due_minute, text) in enumerate(schedule):
                 if idx in sent_marks or elapsed < due_minute:
@@ -492,20 +499,46 @@ async def group_reminder_loop(s: GameSession, bot: Bot) -> None:
                 except Exception as e:
                     logger.warning("Could not send reminder: %s", e)
 
-            # Time up — announce and end the game immediately after the alert.
-            if remaining <= 0 and "timeup" not in sent_marks:
-                sent_marks.add("timeup")
+            if len(sent_marks) >= len(schedule) and not s.final_timer_prompt_sent:
+                s.final_timer_prompt_sent = True
+                s.triggers_paused = True
+                save_lobby_state()
                 try:
                     await bot.send_message(
-                        chat_id=s.lobby_chat_id,
+                        chat_id=s.host_id,
                         text=(
-                            "⚡️ Times up! Unfold your final clue before the story ends."
+                            "⏰ <b>Final timer reached.</b>\n\n"
+                            "Do you want to end the game now?\n"
+                            "If you keep it open, no more trigger cards will be sent."
                         ),
                         parse_mode="HTML",
+                        reply_markup=InlineKeyboardMarkup([
+                            [
+                                InlineKeyboardButton("Yes, end now", callback_data="time_end_confirm:yes"),
+                                InlineKeyboardButton("Keep it open", callback_data="time_end_confirm:no"),
+                            ],
+                        ]),
                     )
-                except Exception:
-                    pass
-                await end_game(s, bot, reason="time")
+                except Exception as e:
+                    logger.warning("Could not send final timer prompt: %s", e)
+                    try:
+                        await bot.send_message(
+                            chat_id=s.lobby_chat_id,
+                            text=(
+                                "⏰ <b>Final timer reached.</b>\n\n"
+                                "Host confirmation is needed to end the game.\n"
+                                "No more trigger cards will be sent."
+                            ),
+                            parse_mode="HTML",
+                            reply_markup=InlineKeyboardMarkup([
+                                [
+                                    InlineKeyboardButton("Yes, end now", callback_data="time_end_confirm:yes"),
+                                    InlineKeyboardButton("Keep it open", callback_data="time_end_confirm:no"),
+                                ],
+                            ]),
+                        )
+                    except Exception:
+                        pass
                 return
 
             next_due = next(
@@ -513,7 +546,7 @@ async def group_reminder_loop(s: GameSession, bot: Bot) -> None:
                 None,
             )
             if next_due is None:
-                sleep_for = 10 if remaining > 1 else 1
+                sleep_for = 10
             else:
                 sleep_for = max(1.0, min(60.0, (next_due - elapsed) * 60.0))
 
@@ -549,8 +582,7 @@ async def restore_active_sessions(app) -> None:
     for s in list(games.values()):
         if s.ended or not s.started:
             continue
-        if s.remaining_minutes() <= 0:
-            await end_game(s, app.bot, reason="time")
+        if s.triggers_paused:
             continue
         if s.trigger_task is None or s.trigger_task.done():
             s.trigger_task = app.create_task(game_trigger_scheduler(s, app.bot))
@@ -598,13 +630,12 @@ def sus_table_text(s: GameSession) -> str:
         pts = s.sus_points.get(name, {"in_game": 0, "in_text": 0}) or {}
         ig = int(pts.get("in_game", 0) or 0)
         it = int(pts.get("in_text", 0) or 0)
-        rows.append((name, ig + it, ig, it))
+        rows.append((name, ig + it, ig, it, "🎭" if name in s.npc_names else "👤"))
 
     rows.sort(key=lambda item: (-item[1], item[0].lower()))
-    for rank, (name, total, ig, it) in enumerate(rows, 1):
+    for rank, (name, total, ig, it, tag) in enumerate(rows, 1):
         safe_name = html.escape(name[:32])
-        lines.append(
-            f"{rank}. <b>{safe_name}</b> · {total} pt{'s' if total != 1 else ''} "
-            f"<i>(IG {ig} / IT {it})</i>"
-        )
-    return "\n".join(lines)
+        lines.append(f"{rank}. {tag} <b>{safe_name}</b>")
+        lines.append(f"   ├ In-Game: {ig}  │  In-Text: {it}")
+        lines.append("")
+    return "\n".join(lines).rstrip()

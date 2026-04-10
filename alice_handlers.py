@@ -1806,6 +1806,33 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             await end_game(s, context.bot, reason="host")
             return
 
+        if data == "time_end_confirm:yes":
+            s = find_player_session(user_id)
+            if not s or user_id != s.host_id:
+                await query.answer("Host only.", show_alert=True)
+                return
+            await query.answer("Ending game now.")
+            await end_game(s, context.bot, reason="time")
+            return
+
+        if data == "time_end_confirm:no":
+            s = find_player_session(user_id)
+            if not s or user_id != s.host_id:
+                await query.answer("Host only.", show_alert=True)
+                return
+            s.triggers_paused = True
+            s.final_timer_prompt_sent = True
+            save_lobby_state()
+            await query.answer("Timer paused.")
+            try:
+                await query.edit_message_text(
+                    "⏸ <b>Timer paused.</b>\n\nNo more trigger cards will be sent.\nUse /endgame when you're ready.",
+                    parse_mode="HTML",
+                )
+            except Exception:
+                pass
+            return
+
         # ── SUSPICION: show in group ──────────────────────────────────────
         if data == "sus_show_group":
             s = find_session_by_chat(query.message.chat_id)
@@ -1983,14 +2010,14 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             elif action == "edit":
                 pending_note[user_id] = f"edit:{idx}"
                 await query.answer()
-                current_note = ps.notes[idx]
-                preview = current_note[:180]
-                if len(current_note) > 180:
+                current_note = ps.notes[idx].replace("\n", " ").strip()
+                preview = html.escape(current_note[:160])
+                if len(current_note) > 160:
                     preview += "..."
                 await query.edit_message_text(
                     f"✏️ <b>Editing note {idx + 1}</b>\n\n"
                     f"<b>Current note</b>\n"
-                    f"<pre>{html.escape(preview)}</pre>\n\n"
+                    f"└ {preview}\n\n"
                     f"Send the updated text as a new message, or type <code>cancel</code>:"
                 )
             return
@@ -2392,10 +2419,6 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             await update.message.reply_text("⚠️ Game ended or player not found.")
             return
 
-        if target_uid < 0:
-            await update.message.reply_text("✅ Message sent (dev dummy).", reply_markup=get_keyboard(s, user.id))
-            return
-
         sender_char = html.escape(s.players[user.id].character_name)
         target_char = html.escape(s.players[target_uid].character_name)
         body = html.escape(text)
@@ -2404,6 +2427,24 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             msg_text = f"💬 <b>Anonymous message</b>\n\n<b>To:</b> {target_char}\n\n{body}"
         else:
             msg_text = f"💌 <b>Message</b>\n\n<b>To:</b> {target_char}\n<b>From:</b> {sender_char}\n\n{body}"
+
+        if target_uid < 0:
+            if not (user.id in dev_mode_users and user.id == s.host_id):
+                await update.message.reply_text("⚠️ Dummy messages are dev-only.", reply_markup=get_keyboard(s, user.id))
+                return
+            await context.bot.send_chat_action(chat_id=user.id, action=ChatAction.TYPING)
+            await asyncio.sleep(random.uniform(0.5, 1.2))
+            await context.bot.send_message(
+                chat_id=user.id,
+                text=msg_text,
+                parse_mode="HTML",
+                reply_markup=get_keyboard(s, user.id),
+            )
+            await update.message.reply_text(
+                "✅ Dev dummy preview shown. That message is what the dummy would receive.",
+                reply_markup=get_keyboard(s, user.id),
+            )
+            return
 
         try:
             await context.bot.send_chat_action(chat_id=target_uid, action=ChatAction.TYPING)
@@ -2683,6 +2724,8 @@ async def _start_game_session(s: GameSession, context) -> tuple[bool, str]:
 
     s.started = True
     s.start_time = _now()
+    s.triggers_paused = False
+    s.final_timer_prompt_sent = False
     save_lobby_state()
 
     pids = list(s.players.keys())
@@ -2787,6 +2830,8 @@ async def _start_game_session(s: GameSession, context) -> tuple[bool, str]:
 
     s.started = True
     s.start_time = _now()
+    s.triggers_paused = False
+    s.final_timer_prompt_sent = False
     save_lobby_state()
 
     pids = list(s.players.keys())
