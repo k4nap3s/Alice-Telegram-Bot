@@ -218,10 +218,7 @@ def _lobby_keyboard(s: GameSession) -> InlineKeyboardMarkup:
         ])
     elif s.is_active():
         return InlineKeyboardMarkup([
-            [
-                InlineKeyboardButton("📜 Characters", callback_data="char_list"),
-                InlineKeyboardButton("🎯 Sus Points", callback_data="sus_show_group"),
-            ],
+            [InlineKeyboardButton("📜 Characters", callback_data="char_list")],
             [InlineKeyboardButton("🛑 End Game", callback_data="game_end")],
         ])
     else:
@@ -269,6 +266,14 @@ async def update_group_lobby(bot: Bot, s: GameSession) -> None:
                     parse_mode="HTML",
                     reply_markup=markup,
                 )
+                try:
+                    await bot.pin_chat_message(
+                        chat_id=s.lobby_chat_id,
+                        message_id=s.lobby_msg_id,
+                        disable_notification=True,
+                    )
+                except Exception as e:
+                    logger.warning("Could not pin edited lobby message: %s", e)
                 return
             except Exception:
                 pass
@@ -279,6 +284,14 @@ async def update_group_lobby(bot: Bot, s: GameSession) -> None:
             reply_markup=markup,
         )
         s.lobby_msg_id = msg.message_id
+        try:
+            await bot.pin_chat_message(
+                chat_id=s.lobby_chat_id,
+                message_id=s.lobby_msg_id,
+                disable_notification=True,
+            )
+        except Exception as e:
+            logger.warning("Could not pin lobby message: %s", e)
     except Exception as e:
         logger.warning("Could not update group lobby: %s", e)
 

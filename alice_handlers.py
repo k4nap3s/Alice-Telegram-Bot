@@ -162,10 +162,7 @@ if build_lobby_keyboard is None:
             ])
         if s.is_active():
             return InlineKeyboardMarkup([
-                [
-                    InlineKeyboardButton("📜 Characters", callback_data="char_list"),
-                    InlineKeyboardButton("🎯 Sus Points", callback_data="sus_show_group"),
-                ],
+                [InlineKeyboardButton("📜 Characters", callback_data="char_list")],
                 [InlineKeyboardButton("🛑 End Game", callback_data="game_end")],
             ])
         return InlineKeyboardMarkup([[InlineKeyboardButton("📜 Characters", callback_data="char_list")]])
@@ -1375,6 +1372,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
                 parse_mode="HTML",
                 reply_markup=None,
             )
+            await update_group_lobby(context.bot, s)
             return
 
         # ── CHARACTER RENAME MENU (notes-style picker) ────────────────────
@@ -1896,8 +1894,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
                 text=f"📊 <b>Suspicion Points</b>\n\n{sus_table_text(s)}",
                 parse_mode="HTML",
             )
-            if user_id in s.players and user_id == s.host_id:
-                await _show_host_tools_panel(query, s, "sus", "📊 Suspicion table sent to the group.")
+            await update_group_lobby(context.bot, s)
             return
 
         # ── SUSPICION: show in DM ─────────────────────────────────────────
