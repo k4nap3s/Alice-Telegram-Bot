@@ -314,7 +314,7 @@ def _host_tools_text(s: GameSession | None, menu: str) -> str:
             return "🎯 <b>Suspicion</b>\n\nNo game found."
         return (
             "🎯 <b>Suspicion</b>\n\n"
-            f"<pre>{html.escape(sus_table_text(s))}</pre>\n\n"
+            f"{sus_table_text(s)}\n\n"
             "Use the buttons below to award points or post the table."
         )
     if menu == "roster":
@@ -798,7 +798,7 @@ async def cmd_showsus(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         return
     table = sus_table_text(s)
     await update.message.reply_text(
-        f"📊 <b>Suspicion Points</b>\n\n<pre>{html.escape(table)}</pre>",
+        f"📊 <b>Suspicion Points</b>\n\n{table}",
         parse_mode="HTML", reply_markup=kb,
     )
 
@@ -943,7 +943,7 @@ async def cmd_postsus(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
     await context.bot.send_message(
         chat_id=s.lobby_chat_id,
-        text=f"📊 <b>Suspicion Points</b>\n\n<pre>{html.escape(sus_table_text(s))}</pre>",
+        text=f"📊 <b>Suspicion Points</b>\n\n{sus_table_text(s)}",
         parse_mode="HTML",
     )
     await update.message.reply_text("📊 Suspicion table sent to the group.", reply_markup=kb)
@@ -1581,7 +1581,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             await query.answer()
             await context.bot.send_message(
                 chat_id=user_id,
-                text=f"📊 <b>Suspicion Points</b>\n\n<pre>{html.escape(sus_table_text(s))}</pre>",
+                text=f"📊 <b>Suspicion Points</b>\n\n{sus_table_text(s)}",
                 parse_mode="HTML",
             )
             return
@@ -1738,7 +1738,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             await query.answer("Suspicion table sent to group.")
             await context.bot.send_message(
                 chat_id=s.lobby_chat_id,
-                text=f"📊 <b>Suspicion Points</b>\n\n<pre>{html.escape(sus_table_text(s))}</pre>",
+                text=f"📊 <b>Suspicion Points</b>\n\n{sus_table_text(s)}",
                 parse_mode="HTML",
             )
             await _show_host_tools_panel(query, s, "sus", "📊 Suspicion table sent to the group.")
@@ -1817,7 +1817,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             await query.answer()
             await context.bot.send_message(
                 chat_id=s.lobby_chat_id,
-                text=f"📊 <b>Suspicion Points</b>\n\n<pre>{html.escape(sus_table_text(s))}</pre>",
+                text=f"📊 <b>Suspicion Points</b>\n\n{sus_table_text(s)}",
                 parse_mode="HTML",
             )
             if user_id in s.players and user_id == s.host_id:
@@ -1983,9 +1983,15 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             elif action == "edit":
                 pending_note[user_id] = f"edit:{idx}"
                 await query.answer()
+                current_note = ps.notes[idx]
+                preview = current_note[:180]
+                if len(current_note) > 180:
+                    preview += "..."
                 await query.edit_message_text(
                     f"✏️ <b>Editing note {idx + 1}</b>\n\n"
-                    f"<i>{html.escape(ps.notes[idx])}</i>\n\nSend the new text or type <code>cancel</code>:"
+                    f"<b>Current note</b>\n"
+                    f"<pre>{html.escape(preview)}</pre>\n\n"
+                    f"Send the updated text as a new message, or type <code>cancel</code>:"
                 )
             return
 

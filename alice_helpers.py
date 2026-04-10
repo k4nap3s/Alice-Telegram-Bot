@@ -472,23 +472,25 @@ async def group_reminder_loop(s: GameSession, bot: Bot) -> None:
     This loop announces scheduled reminders and force-ends the session when
     the timer expires so no trigger tasks keep running past the finale.
     """
-    sent_marks: set = set()
+    schedule = _group_reminder_schedule()
+    sent_marks: set[object] = set()
     try:
         while not s.ended:
             elapsed = s.elapsed_minutes()
             remaining = GAME_DURATION_MINUTES - elapsed
 
-            for mark, text in GROUP_REMINDERS:
-                if mark not in sent_marks and remaining <= mark:
-                    sent_marks.add(mark)
-                    try:
-                        await bot.send_message(
-                            chat_id=s.lobby_chat_id,
-                            text=text,
-                            parse_mode="HTML",
-                        )
-                    except Exception as e:
-                        logger.warning("Could not send reminder: %s", e)
+            for idx, (due_minute, text) in enumerate(schedule):
+                if idx in sent_marks or elapsed < due_minute:
+                    continue
+                sent_marks.add(idx)
+                try:
+                    await bot.send_message(
+                        chat_id=s.lobby_chat_id,
+                        text=text,
+                        parse_mode="HTML",
+                    )
+                except Exception as e:
+                    logger.warning("Could not send reminder: %s", e)
 
             # Time up — announce and end the game immediately after the alert.
             if remaining <= 0 and "timeup" not in sent_marks:
@@ -506,12 +508,14 @@ async def group_reminder_loop(s: GameSession, bot: Bot) -> None:
                 await end_game(s, bot, reason="time")
                 return
 
-            if remaining > 15:
-                sleep_for = 10
-            elif remaining > 1:
-                sleep_for = 5
+            next_due = next(
+                (due_minute for idx, (due_minute, _) in enumerate(schedule) if idx not in sent_marks),
+                None,
+            )
+            if next_due is None:
+                sleep_for = 10 if remaining > 1 else 1
             else:
-                sleep_for = 1
+                sleep_for = max(1.0, min(60.0, (next_due - elapsed) * 60.0))
 
             await asyncio.sleep(sleep_for)
 
@@ -519,6 +523,25 @@ async def group_reminder_loop(s: GameSession, bot: Bot) -> None:
         pass
     except Exception as e:
         logger.exception("Reminder loop error for game %s: %s", s.game_id, e)
+
+
+def _group_reminder_schedule() -> list[tuple[float, str]]:
+    """Convert countdown labels into elapsed-time send points.
+
+    The first reminder is sent immediately at game start, then each later card
+    waits for the difference between its label and the previous one.
+    """
+    schedule: list[tuple[float, str]] = []
+    elapsed_minute = 0.0
+    previous_mark: int | None = None
+    for mark, text in GROUP_REMINDERS:
+        if previous_mark is None:
+            elapsed_minute = 0.0
+        else:
+            elapsed_minute += max(0, previous_mark - mark)
+        schedule.append((elapsed_minute, text))
+        previous_mark = mark
+    return schedule
 
 
 async def restore_active_sessions(app) -> None:
@@ -550,7 +573,7 @@ def notes_text(ps: PlayerState) -> str:
 
 
 def sus_table_text(s: GameSession) -> str:
-    lines = ["Rank  Character                Points  Breakdown"]
+    lines = []
     roster: list[str] = []
     seen: set[str] = set()
 
@@ -568,7 +591,7 @@ def sus_table_text(s: GameSession) -> str:
             seen.add(name)
 
     if not roster:
-        return "\n".join(lines + ["", "(no characters yet)"])
+        return "<i>(no characters yet)</i>"
 
     rows = []
     for name in roster:
@@ -579,6 +602,9 @@ def sus_table_text(s: GameSession) -> str:
 
     rows.sort(key=lambda item: (-item[1], item[0].lower()))
     for rank, (name, total, ig, it) in enumerate(rows, 1):
-        safe_name = name[:24]
-        lines.append(f"{rank:>4}  {safe_name:<24}  {total:>5}  IG {ig} / IT {it}")
+        safe_name = html.escape(name[:32])
+        lines.append(
+            f"{rank}. <b>{safe_name}</b> · {total} pt{'s' if total != 1 else ''} "
+            f"<i>(IG {ig} / IT {it})</i>"
+        )
     return "\n".join(lines)
