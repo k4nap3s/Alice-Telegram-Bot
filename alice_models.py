@@ -34,6 +34,7 @@ class GameSession:
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
     lobby_msg_id: Optional[int] = None
+    lobby_pinned: bool = False
     sus_points: dict = field(default_factory=dict)
     player_tasks: dict = field(default_factory=dict)
     trigger_task: object = None

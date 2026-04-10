@@ -113,6 +113,7 @@ def save_lobby_state() -> None:
                 "ended": s.ended,
                 "start_time": st_str,
                 "lobby_msg_id": s.lobby_msg_id,
+                "lobby_pinned": s.lobby_pinned,
                 "sus_points": s.sus_points,
                 "triggers_paused": s.triggers_paused,
                 "final_timer_prompt_sent": s.final_timer_prompt_sent,
@@ -173,6 +174,7 @@ def load_lobby_state() -> None:
                 ended=raw.get("ended", False),
                 start_time=start_time,
                 lobby_msg_id=raw.get("lobby_msg_id"),
+                lobby_pinned=raw.get("lobby_pinned", False),
                 sus_points=raw.get("sus_points", {}),
                 triggers_paused=raw.get("triggers_paused", False),
                 final_timer_prompt_sent=raw.get("final_timer_prompt_sent", False),
@@ -207,22 +209,19 @@ def clear_session_runtime_state(s: GameSession) -> None:
 
 def _lobby_keyboard(s: GameSession) -> InlineKeyboardMarkup:
     """Compact inline keyboard for the pinned group lobby card — NO close button."""
-    rows = [[
-        InlineKeyboardButton("📜 Characters", callback_data="char_list"),
-    ]]
+    rows = [[InlineKeyboardButton("📜 Characters", callback_data="char_list")]]
     if s.is_active():
         rows[0].append(InlineKeyboardButton("🎯 Sus Points", callback_data="sus_show_group"))
-    rows.extend([
-        [
-            InlineKeyboardButton("📖 Guide", callback_data="group_guide"),
-            InlineKeyboardButton("❓ Help", callback_data="group_help"),
-        ],
-        [
+    rows.append([
+        InlineKeyboardButton("📖 Guide", callback_data="group_guide"),
+        InlineKeyboardButton("❓ Help", callback_data="group_help"),
+    ])
+    if s.is_lobby():
+        rows.append([
             InlineKeyboardButton("🔗 Join", callback_data=f"join:{s.game_id}"),
             InlineKeyboardButton("▶️ Start", callback_data="game_start"),
-        ],
-        [InlineKeyboardButton("🛑 End Game", callback_data="game_end")],
-    ])
+        ])
+    rows.append([InlineKeyboardButton("🛑 End Game", callback_data="game_end")])
     return InlineKeyboardMarkup(rows)
 
 
@@ -265,24 +264,29 @@ async def update_group_lobby(bot: Bot, s: GameSession) -> None:
                     parse_mode="HTML",
                     reply_markup=markup,
                 )
-                return
             except Exception:
                 pass
-        msg = await bot.send_message(
-            chat_id=s.lobby_chat_id,
-            text=text,
-            parse_mode="HTML",
-            reply_markup=markup,
-        )
-        s.lobby_msg_id = msg.message_id
-        try:
-            await bot.pin_chat_message(
+        else:
+            msg = await bot.send_message(
                 chat_id=s.lobby_chat_id,
-                message_id=s.lobby_msg_id,
-                disable_notification=True,
+                text=text,
+                parse_mode="HTML",
+                reply_markup=markup,
             )
-        except Exception as e:
-            logger.warning("Could not pin lobby message: %s", e)
+            s.lobby_msg_id = msg.message_id
+            s.lobby_pinned = False
+
+        if s.lobby_msg_id and not s.lobby_pinned:
+            try:
+                await bot.pin_chat_message(
+                    chat_id=s.lobby_chat_id,
+                    message_id=s.lobby_msg_id,
+                    disable_notification=True,
+                )
+                s.lobby_pinned = True
+                save_lobby_state()
+            except Exception as e:
+                logger.warning("Could not pin lobby message: %s", e)
     except Exception as e:
         logger.warning("Could not update group lobby: %s", e)
 

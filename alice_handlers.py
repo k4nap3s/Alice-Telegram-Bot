@@ -154,17 +154,16 @@ if build_lobby_keyboard is None:
         rows = [[InlineKeyboardButton("📜 Characters", callback_data="char_list")]]
         if s.is_active():
             rows[0].append(InlineKeyboardButton("🎯 Sus Points", callback_data="sus_show_group"))
-        rows.extend([
-            [
-                InlineKeyboardButton("📖 Guide", callback_data="group_guide"),
-                InlineKeyboardButton("❓ Help", callback_data="group_help"),
-            ],
-            [
+        rows.append([
+            InlineKeyboardButton("📖 Guide", callback_data="group_guide"),
+            InlineKeyboardButton("❓ Help", callback_data="group_help"),
+        ])
+        if s.is_lobby():
+            rows.append([
                 InlineKeyboardButton("🔗 Join", callback_data=f"join:{s.game_id}"),
                 InlineKeyboardButton("▶️ Start", callback_data="game_start"),
-            ],
-            [InlineKeyboardButton("🛑 End Game", callback_data="game_end")],
-        ])
+            ])
+        rows.append([InlineKeyboardButton("🛑 End Game", callback_data="game_end")])
         return InlineKeyboardMarkup(rows)
 
 
@@ -182,16 +181,28 @@ async def refresh_group_lobby(bot, s: GameSession) -> None:
                     parse_mode="HTML",
                     reply_markup=markup,
                 )
-                return
             except Exception:
                 pass
-        msg = await bot.send_message(
-            chat_id=s.lobby_chat_id,
-            text=text,
-            parse_mode="HTML",
-            reply_markup=markup,
-        )
-        s.lobby_msg_id = msg.message_id
+        else:
+            msg = await bot.send_message(
+                chat_id=s.lobby_chat_id,
+                text=text,
+                parse_mode="HTML",
+                reply_markup=markup,
+            )
+            s.lobby_msg_id = msg.message_id
+
+        if s.lobby_msg_id and not getattr(s, "lobby_pinned", False):
+            try:
+                await bot.pin_chat_message(
+                    chat_id=s.lobby_chat_id,
+                    message_id=s.lobby_msg_id,
+                    disable_notification=True,
+                )
+                s.lobby_pinned = True
+                save_lobby_state()
+            except Exception:
+                pass
     except Exception as e:
         logger.warning("Could not refresh group lobby: %s", e)
 
