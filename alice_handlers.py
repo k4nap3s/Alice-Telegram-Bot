@@ -236,7 +236,7 @@ def _clear_input_state(uid: int, *, keep: set[str] | None = None) -> None:
         pending_sus_char.pop(uid, None)
     if "rename" not in keep:
         pending_host_rename.pop(uid, None)
-from content import PLAYER_SECRETS, ORACLE_YES, ORACLE_NO
+from content import PLAYER_SECRETS, ORACLE_YES, ORACLE_NO, SEEKING_CARDS
 
 logger = logging.getLogger(__name__)
 UTC = timezone.utc
@@ -485,6 +485,17 @@ def _note_action_label(action: str) -> str:
     }.get(action, action)
 
 
+async def _send_seeking_cards_result(bot, chat_id: int) -> None:
+    await bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
+    await asyncio.sleep(random.uniform(1.5, 2.5))
+    answer = random.choice(SEEKING_CARDS)
+    await bot.send_message(
+        chat_id=chat_id,
+        text=f"🕵️ <b>Seeking Cards</b>\n\n{html.escape(answer)}",
+        parse_mode="HTML",
+    )
+
+
 def _char_list_inline(s: GameSession) -> InlineKeyboardMarkup | None:
     """Group character lists are now read-only."""
     return None
@@ -503,7 +514,7 @@ def _help_text() -> str:
         "• /join GAMEID — join a game\n"
         "• /name NAME — set or change your character name\n"
         "• /message — send a DM to another player\n"
-        "• /notes — view or edit your notes\n"
+        "• Seeking Cards — reveal a random clue-style result\n"
         "• /fate — ask the oracle a yes/no question\n"
         "• /cancel — cancel the current pending action\n"
         "• /guide — how to play\n\n"
@@ -1117,7 +1128,7 @@ async def cmd_notes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     if not s or not s.is_active():
         await update.message.reply_text(
-            "📝 Notes are available once the game starts.",
+            "📝 Your journal is available once the game starts.",
             reply_markup=get_keyboard(s, user.id),
         )
         return
@@ -1676,19 +1687,13 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             )
             return
 
-        if data == "gm_notes":
+        if data in ("gm_notes", "gm_seek"):
             s = find_player_session(user_id)
             if not s or not s.is_active() or user_id not in s.players:
-                await query.answer("Notes are available during an active game.", show_alert=True)
+                await query.answer("Seeking Cards is available during an active game.", show_alert=True)
                 return
-            ps = s.players[user_id]
             await query.answer()
-            await context.bot.send_message(
-                chat_id=user_id,
-                text=notes_text(ps),
-                parse_mode="HTML",
-                reply_markup=notes_markup(ps),
-            )
+            await _send_seeking_cards_result(context.bot, user_id)
             return
 
         if data == "gm_help":
@@ -2133,7 +2138,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
         if data == "note_close":
             await query.answer()
-            await query.edit_message_text("📝 Notes closed. Use 📝 Notes to reopen.")
+            await query.edit_message_text("📝 Journal closed. Use /notes to reopen.")
             return
 
         # ── MESSAGING: pick player ────────────────────────────────────────
@@ -2345,8 +2350,14 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         await cmd_fate(update, context)
         return
 
-    if tl == "📝 notes":
-        await cmd_notes(update, context)
+    if tl in {"🔎 seeking cards", "📝 notes"}:
+        if not s or not s.is_active() or user.id not in s.players:
+            await update.message.reply_text(
+                "Seeking Cards are available during an active game.",
+                reply_markup=get_keyboard(s, user.id),
+            )
+            return
+        await _send_seeking_cards_result(context.bot, update.effective_chat.id)
         return
 
     if tl == "💬 message player":

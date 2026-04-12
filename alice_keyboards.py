@@ -18,6 +18,7 @@ PRIVATE_BUTTON_TEXTS = {
     "💬 message player",
     "🔮 divine fate",
     "📝 notes",
+    "🔎 seeking cards",
     "🎯 sus points",
     "➕ add npc",
     "❓ help",
@@ -68,7 +69,7 @@ def get_keyboard(session, uid: int) -> ReplyKeyboardMarkup:
             return ReplyKeyboardMarkup(
                 [
                     ["💬 Message Player", "🔮 Divine Fate"],
-                    ["📝 Notes", "🎯 Sus Points"],
+                    ["🔎 Seeking Cards", "🎯 Sus Points"],
                     ["❓ Help", "📖 Guide"],
                 ],
                 resize_keyboard=True,
@@ -76,7 +77,7 @@ def get_keyboard(session, uid: int) -> ReplyKeyboardMarkup:
         return ReplyKeyboardMarkup(
             [
                 ["💬 Message Player", "🔮 Divine Fate"],
-                ["📝 Notes"],
+                ["🔎 Seeking Cards"],
                 ["❓ Help", "📖 Guide"],
             ],
             resize_keyboard=True,
@@ -107,7 +108,7 @@ def game_menu_inline(session, uid: int) -> InlineKeyboardMarkup:
             InlineKeyboardButton("💬 Message Player", callback_data="gm_message"),
             InlineKeyboardButton("🔮 Oracle / Divine Fate", callback_data="gm_fate"),
         ],
-        [InlineKeyboardButton("📝 Notes", callback_data="gm_notes")],
+        [InlineKeyboardButton("🔎 Seeking Cards", callback_data="gm_seek")],
         [InlineKeyboardButton("❓ Help", callback_data="gm_help")],
         [InlineKeyboardButton("↩ Back", callback_data="menu_back")],
     ]
