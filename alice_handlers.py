@@ -241,6 +241,8 @@ from content import PLAYER_SECRETS, ORACLE_YES, ORACLE_NO, SEEKING_CARDS
 logger = logging.getLogger(__name__)
 UTC = timezone.utc
 GUIDE_IMAGE_PATH = Path(__file__).resolve().parent / "assets" / "alice_is_missing_guide.png"
+ORACLE_NEGATIVE_IMAGE_PATH = Path(__file__).resolve().parent / "assets" / "oracle_negative.png"
+ORACLE_POSITIVE_IMAGE_PATH = Path(__file__).resolve().parent / "assets" / "oracle_positive.png"
 
 DUMMY_PLAYERS = {
     -10001: ("Morgan Lee", "Morgan was the last person to see Alice before she vanished."),
@@ -344,6 +346,40 @@ async def _send_guide_asset(bot, chat_id: int, *, reply_markup=None) -> None:
     await bot.send_message(
         chat_id=chat_id,
         text=_guide_text(),
+        parse_mode="HTML",
+        reply_markup=reply_markup,
+    )
+
+
+async def _send_oracle_asset(bot, chat_id: int, positive: bool, *, reply_markup=None) -> None:
+    await bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
+    await asyncio.sleep(random.uniform(1.5, 2.5))
+
+    if positive:
+        answer = random.choice(ORACLE_YES)
+        image_path = ORACLE_POSITIVE_IMAGE_PATH
+    else:
+        answer = random.choice(ORACLE_NO)
+        image_path = ORACLE_NEGATIVE_IMAGE_PATH
+
+    caption = f"🔮 <i>{html.escape(answer)}</i>"
+    if image_path.exists():
+        try:
+            with image_path.open("rb") as photo:
+                await bot.send_photo(
+                    chat_id=chat_id,
+                    photo=photo,
+                    caption=caption,
+                    parse_mode="HTML",
+                    reply_markup=reply_markup,
+                )
+                return
+        except Exception as e:
+            logger.warning("Could not send oracle image: %s", e)
+
+    await bot.send_message(
+        chat_id=chat_id,
+        text=caption,
         parse_mode="HTML",
         reply_markup=reply_markup,
     )
@@ -474,6 +510,7 @@ def _char_list_text(s: GameSession, dev_mode: bool = False, show_name_hint: bool
     if show_name_hint:
         lines.append("")
         lines.append("✏️ <b>To change your name:</b> open DM with the bot and send <code>/name NEW NAME</code>.")
+        lines.append("📝 <b>To take notes:</b> use <code>/notes</code> in DM during the game.")
     return "\n".join(lines)
 
 
@@ -514,6 +551,7 @@ def _help_text() -> str:
         "• /join GAMEID — join a game\n"
         "• /name NAME — set or change your character name\n"
         "• /message — send a DM to another player\n"
+        "• /seekingcards — draw a random seeking card\n"
         "• Seeking Cards — reveal a random clue-style result\n"
         "• /fate — ask the oracle a yes/no question\n"
         "• /cancel — cancel the current pending action\n"
@@ -916,13 +954,11 @@ async def cmd_fate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         )
         return
 
-    if priv:
-        await context.bot.send_chat_action(chat_id=uid, action=ChatAction.TYPING)
-        await asyncio.sleep(random.uniform(1.5, 2.5))
-
-    answer = random.choice(ORACLE_YES + ORACLE_NO)
-    await update.message.reply_text(
-        f"🔮 <i>{html.escape(answer)}</i>", parse_mode="HTML", reply_markup=kb,
+    await _send_oracle_asset(
+        context.bot,
+        update.effective_chat.id,
+        positive=random.choice((True, False)),
+        reply_markup=kb,
     )
 
 
@@ -1140,6 +1176,29 @@ async def cmd_notes(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(
         notes_text(ps), parse_mode="HTML", reply_markup=notes_markup(ps),
     )
+
+
+async def cmd_seeking_cards(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user = update.effective_user
+    chat = update.effective_chat
+
+    if chat.type != "private":
+        await update.message.reply_text(
+            "Open a DM with the bot and use /seekingcards there.",
+        )
+        return
+
+    s = _session_for_user(user.id)
+    kb = get_keyboard(s, user.id)
+
+    if not s or not s.is_active() or user.id not in s.players:
+        await update.message.reply_text(
+            "Seeking Cards are available during an active game.",
+            reply_markup=kb,
+        )
+        return
+
+    await _send_seeking_cards_result(context.bot, chat.id)
 
 
 async def cmd_sus(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -1713,13 +1772,11 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
                 await query.answer("The oracle only speaks during an active game.", show_alert=True)
                 return
             await query.answer()
-            await context.bot.send_chat_action(chat_id=user_id, action=ChatAction.TYPING)
-            await asyncio.sleep(random.uniform(1.5, 2.5))
-            answer = random.choice(ORACLE_YES + ORACLE_NO)
-            await context.bot.send_message(
-                chat_id=user_id,
-                text=f"🔮 <i>{html.escape(answer)}</i>",
-                parse_mode="HTML",
+            await _send_oracle_asset(
+                context.bot,
+                user_id,
+                positive=random.choice((True, False)),
+                reply_markup=get_keyboard(s, user_id),
             )
             return
 
@@ -2236,13 +2293,10 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
                 await query.answer("The oracle only speaks during an active game.", show_alert=True)
                 return
             await query.answer()
-            await context.bot.send_chat_action(chat_id=user_id, action=ChatAction.TYPING)
-            await asyncio.sleep(random.uniform(1.5, 2.5))
-            answer = random.choice(ORACLE_YES + ORACLE_NO)
-            await context.bot.send_message(
-                chat_id=user_id,
-                text=f"🔮 <i>{html.escape(answer)}</i>",
-                parse_mode="HTML",
+            await _send_oracle_asset(
+                context.bot,
+                user_id,
+                positive=random.choice((True, False)),
             )
             return
 

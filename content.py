@@ -122,13 +122,7 @@ ORACLE_NO = [
 ]
 
 SEEKING_CARDS = [
-    "a loaded firearm",
-    "a sketchy van",
-    "a switchblade",
-    "a creepy mask",
-    "a half-full bottle of alcohol",
-    "drops of blood in the snow",
-    "the feeling you’re being followed",
+
     "a bloodstained hoodie",
     "a smashed phone screen",
     "a shattered rearview mirror",
@@ -171,7 +165,25 @@ SEEKING_CARDS = [
     "a crowbar with chipped paint",
     "a parking ticket stamped at a strange hour",
     "a USB stick with no label",
-    "a hoodie left on a chair that still smells like smoke",
+    "a hoodie left on a chair that still smells like smoke", "a rope coiled loosely on the ground",
+    "a torn backpack strap lying in the dirt",
+    "a cracked pair of handcuffs",
+    "a broken window latch",
+    "a scarf knotted too tightly around a chair",
+    "a jacket sleeve with the cuff ripped off",
+    "a baseball cap with dried mud on the brim",
+    "a toolbox with one slot empty",
+    "a crowbar with fresh scratches near the tip",
+    "a shoe with the laces cut clean through",
+    "a lighter engraved with unfamiliar initials",
+    "a stack of photos with one missing from the middle",
+    "a glove with a single fingerprint visible in dust",
+    "a hotel receipt paid in cash",
+    "a car seatbelt sliced almost all the way through",
+    "a length of rope frayed at both ends",
+    "a hoodie with the inside pocket carefully removed",
+    "a bottle labeled as cleaner but smelling like gasoline",
+    "a metal pipe hidden behind a trash bin",
 ]
 
 GROUP_REMINDERS = [

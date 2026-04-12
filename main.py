@@ -37,6 +37,7 @@ from alice_handlers import (
     cmd_rename,
     cmd_addsus,
     cmd_fate,
+    cmd_seeking_cards,
     cmd_endgame,
     cmd_forcestop,
     cmd_startgame,
@@ -147,6 +148,8 @@ def main() -> None:
     app.add_handler(CommandHandler("cancel", cmd_cancel))
     app.add_handler(CommandHandler("message", cmd_message))
     app.add_handler(CommandHandler("fate", cmd_fate))
+    app.add_handler(CommandHandler("seekingcards", cmd_seeking_cards))
+    app.add_handler(CommandHandler("seekcards", cmd_seeking_cards))
 
     app.add_handler(CallbackQueryHandler(callback_handler))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
