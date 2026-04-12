@@ -2,6 +2,7 @@
 
 import asyncio
 import random
+import secrets
 import logging
 import html
 from datetime import datetime, timezone
@@ -240,9 +241,23 @@ from content import PLAYER_SECRETS, ORACLE_YES, ORACLE_NO, SEEKING_CARDS
 
 logger = logging.getLogger(__name__)
 UTC = timezone.utc
-GUIDE_IMAGE_PATH = Path(__file__).resolve().parent / "assets" / "alice_is_missing_guide.png"
-ORACLE_NEGATIVE_IMAGE_PATH = Path(__file__).resolve().parent / "assets" / "oracle_negative.png"
-ORACLE_POSITIVE_IMAGE_PATH = Path(__file__).resolve().parent / "assets" / "oracle_positive.png"
+ASSET_DIR = Path(__file__).resolve().parent / "assets"
+GUIDE_IMAGE_PATHS = (
+    ASSET_DIR / "alice_is_missing_guide.png",
+    ASSET_DIR / "alice_is_missing_guide.jpg",
+    ASSET_DIR / "alice_is_missing_guide.jpeg",
+)
+ORACLE_NEGATIVE_IMAGE_PATHS = (
+    ASSET_DIR / "oracle_negative.png",
+    ASSET_DIR / "oracle_negative.jpg",
+    ASSET_DIR / "oracle_negative.jpeg",
+)
+ORACLE_POSITIVE_IMAGE_PATHS = (
+    ASSET_DIR / "oracle_positive.png",
+    ASSET_DIR / "oracle_positive.jpg",
+    ASSET_DIR / "oracle_positive.jpeg",
+)
+oracle_last_reply_by_chat: dict[int, str] = {}
 
 DUMMY_PLAYERS = {
     -10001: ("Morgan Lee", "Morgan was the last person to see Alice before she vanished."),
@@ -252,6 +267,28 @@ DUMMY_PLAYERS = {
 
 def _now() -> datetime:
     return datetime.now(tz=UTC)
+
+
+def _first_existing_path(paths: tuple[Path, ...]) -> Path | None:
+    for path in paths:
+        if path.exists():
+            return path
+    return None
+
+
+def _oracle_answer(chat_id: int, *, positive: bool) -> str:
+    options = ORACLE_YES if positive else ORACLE_NO
+    if len(options) == 1:
+        answer = options[0]
+    else:
+        last_answer = oracle_last_reply_by_chat.get(chat_id)
+        answer = secrets.choice(options)
+        for _ in range(5):
+            if answer != last_answer:
+                break
+            answer = secrets.choice(options)
+    oracle_last_reply_by_chat[chat_id] = answer
+    return answer
 
 
 def _generate_game_id() -> str:
@@ -329,9 +366,10 @@ def _guide_text() -> str:
 
 async def _send_guide_asset(bot, chat_id: int, *, reply_markup=None) -> None:
     """Send the guide image if it is available locally; otherwise fall back to text."""
-    if GUIDE_IMAGE_PATH.exists():
+    image_path = _first_existing_path(GUIDE_IMAGE_PATHS)
+    if image_path:
         try:
-            with GUIDE_IMAGE_PATH.open("rb") as photo:
+            with image_path.open("rb") as photo:
                 await bot.send_photo(
                     chat_id=chat_id,
                     photo=photo,
@@ -356,14 +394,14 @@ async def _send_oracle_asset(bot, chat_id: int, positive: bool, *, reply_markup=
     await asyncio.sleep(random.uniform(1.5, 2.5))
 
     if positive:
-        answer = random.choice(ORACLE_YES)
-        image_path = ORACLE_POSITIVE_IMAGE_PATH
+        answer = _oracle_answer(chat_id, positive=True)
+        image_path = _first_existing_path(ORACLE_POSITIVE_IMAGE_PATHS)
     else:
-        answer = random.choice(ORACLE_NO)
-        image_path = ORACLE_NEGATIVE_IMAGE_PATH
+        answer = _oracle_answer(chat_id, positive=False)
+        image_path = _first_existing_path(ORACLE_NEGATIVE_IMAGE_PATHS)
 
     caption = f"🔮 <i>{html.escape(answer)}</i>"
-    if image_path.exists():
+    if image_path is not None:
         try:
             with image_path.open("rb") as photo:
                 await bot.send_photo(
@@ -957,7 +995,7 @@ async def cmd_fate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await _send_oracle_asset(
         context.bot,
         update.effective_chat.id,
-        positive=random.choice((True, False)),
+        positive=secrets.choice((True, False)),
         reply_markup=kb,
     )
 
@@ -1775,7 +1813,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             await _send_oracle_asset(
                 context.bot,
                 user_id,
-                positive=random.choice((True, False)),
+                positive=secrets.choice((True, False)),
                 reply_markup=get_keyboard(s, user_id),
             )
             return
@@ -2296,7 +2334,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             await _send_oracle_asset(
                 context.bot,
                 user_id,
-                positive=random.choice((True, False)),
+                positive=secrets.choice((True, False)),
             )
             return
 
