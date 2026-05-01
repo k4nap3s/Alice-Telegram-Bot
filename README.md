@@ -1,6 +1,6 @@
 # Alice Is Missing - Telegram Bot
 ![Python Version](https://img.shields.io/badge/python-3.11+-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
+![License](https://img.shields.io/badge/license-GPL--3.0-blue)
 
 An unofficial Telegram adaptation of the silent mystery roleplaying game *Alice Is Missing*. Players uncover what happened to Alice through timed trigger cards, private messages, clues, and suspicion tracking.
 
