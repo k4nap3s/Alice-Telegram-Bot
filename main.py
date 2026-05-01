@@ -109,11 +109,17 @@ def _release_lock() -> None:
 def main() -> None:
     _acquire_single_instance()
 
+    # Fix for Python 3.14 asyncio
+    import asyncio
+    try:
+        asyncio.get_event_loop()
+    except RuntimeError:
+        asyncio.set_event_loop(asyncio.new_event_loop())
+
     token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
     if not token:
         logger.error("TELEGRAM_BOT_TOKEN is not set. Exiting.")
         sys.exit(1)
-
     load_lobby_state()
 
     async def _post_init(application: Application) -> None:
