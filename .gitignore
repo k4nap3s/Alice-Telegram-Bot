@@ -65,3 +65,8 @@ Thumbs.db
 *.backup
 data/
 backups/
+# Game state
+lobby_state.json
+
+# PyCharm exports
+exportToHTML/
