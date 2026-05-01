@@ -12,7 +12,7 @@ This is a text-only story game for a group chat and private DMs.
 - Suspicion points, notes, and private messages help shape the story as it unfolds.
 
 ## How It Plays
-
+https://docs.google.com/document/d/e/2PACX-1vSFwZrJL02xuBbWOm5THFvpRCR4KFh9t9-J60gEZHJt8LPJ0kEktHfuFCN7ANnQqWkkBLXavoSLGSDS/pub
 1. The host creates a lobby with `/newgame`.
 2. Players join from the pinned group card.
 3. Each player sets a character name in DM.
