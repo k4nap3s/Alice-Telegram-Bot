@@ -1,4 +1,6 @@
 # Alice Is Missing - Telegram Bot
+![Python Version](https://img.shields.io/badge/python-3.11+-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
 
 An unofficial Telegram adaptation of the silent mystery roleplaying game *Alice Is Missing*. Players uncover what happened to Alice through timed trigger cards, private messages, clues, and suspicion tracking.
 
@@ -41,11 +43,7 @@ git clone https://github.com/k4nap3s/Alice-Telegram-Bot.git
 cd Alice-Telegram-Bot
 ```
 
-### Step 3: Choose a Hosting Method
-
-#### Option A: Local Hosting (Free)
-
-**Best for:** Running the bot during game sessions on your own computer
+### Step 3: Install and Run
 
 **Requirements:** Python 3.11+
 
@@ -63,17 +61,6 @@ python3 main.py
 The bot will run as long as your terminal is open. Press `Control+C` to stop it.
 
 **Note:** Your computer must be on and connected to the internet for the bot to work.
-
-#### Option B: Cloud Hosting ($5-7/month)
-
-**Best for:** 24/7 availability without keeping your computer running
-
-**Recommended platforms:**
-- [Render](https://render.com) - Background Worker ($7/month)
-- [Railway](https://railway.app) - Pay-as-you-go (typically $5-10/month)
-- [PythonAnywhere](https://pythonanywhere.com) - Web App ($5/month)
-
-Each platform has different deployment steps. See their documentation for Python bot deployment.
 
 ## Main Features
 
