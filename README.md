@@ -61,12 +61,9 @@ https://docs.google.com/document/d/e/2PACX-1vSFwZrJL02xuBbWOm5THFvpRCR4KFh9t9-J6
 
 - `/dev alice` - Toggle test mode for local development
 
-## Setup
-
-```bash
-export TELEGRAM_BOT_TOKEN="your-token-here"
-python main.py
-```
+## Bot
+@FavTaskManagerBot 
+(name is weird I know but I can't change it now)
 
 ## Attribution
 
